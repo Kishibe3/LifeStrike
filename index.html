@@ -69,7 +69,7 @@
             }
             ctx.stroke();
 
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 2;
             ctx.strokeStyle = '#FF00FF';
             ctx.beginPath();
             ctx.rect(d(-evolve_area[0] - 0.5) * 25, d(-evolve_area[1] - 0.5) * 25, evolve_area[0] * 50, evolve_area[1] * 50);
@@ -82,6 +82,7 @@
                 ctx.stroke();
             }
 
+            ctx.lineWidth = 1;
             ctx.strokeStyle = '#666666';
             for (let [c, p] of cells) {
                 c = JSON.parse(c);
