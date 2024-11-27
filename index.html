@@ -1,0 +1,232 @@
+<html>
+<head>
+    <title>LifeStrike</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+        }
+        div {
+            position: fixed;
+            bottom: 50px;
+        }
+        button {
+            font-size: 48px;
+            margin: 0px 10px;
+            padding: 0px 10px;
+        }
+    </style>
+</head>
+<body>
+    <canvas oncontextmenu="event.preventDefault()"></canvas>
+    <div>
+        <button onclick="step()">I'm done</button>
+        <button onclick="undo()">Undo</button>
+        <button onclick="help()">Help</button>
+    </div>
+    <script>
+        let player = 0;
+        let player_color = ['#FFFF00', '#00FFFF'];
+        let player_edit_area = [{x: -26, y: -8}, {x: 11, y: -8}];
+        let evolve_area = [30, 15];
+        let player_coin = [30, 30];
+        let cells = new Map();
+        let cost = 10, generation = 0;
+
+        let pre_coin = [...player_coin], pre_cells = new Map();
+
+        const u = x => x > 0 ? Math.ceil(x) : Math.floor(x);
+        const d = x => x > 0 ? Math.floor(x) : Math.ceil(x);
+        let canvas = document.querySelector('canvas');
+        let ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+        function draw() {
+            canvas.width = innerWidth;
+            canvas.height = innerHeight;
+            ctx.lineWidth = 1;
+            ctx.translate(innerWidth / 2, innerHeight / 2);
+
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(-innerWidth / 2, -innerHeight / 2, innerWidth, innerHeight);
+
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.moveTo(-innerWidth / 2, 0);
+            ctx.lineTo(innerWidth / 2, 0);
+            for (let p = 50; p < innerHeight / 2; p += 50) {
+                ctx.moveTo(-innerWidth / 2, p);
+                ctx.lineTo(innerWidth / 2, p);
+                ctx.moveTo(-innerWidth / 2, -p);
+                ctx.lineTo(innerWidth / 2, -p);
+            }
+            ctx.moveTo(0, -innerHeight / 2);
+            ctx.lineTo(0, innerHeight / 2);
+            for (let p = 50; p < innerWidth / 2; p += 50) {
+                ctx.moveTo(p, -innerHeight / 2);
+                ctx.lineTo(p, innerHeight / 2);
+                ctx.moveTo(-p, -innerHeight / 2);
+                ctx.lineTo(-p, innerHeight / 2);
+            }
+            ctx.stroke();
+
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#FF00FF';
+            ctx.beginPath();
+            ctx.rect(d(-evolve_area[0] - 0.5) * 50, d(-evolve_area[1] - 0.5) * 50, evolve_area[0] * 100, evolve_area[1] * 100);
+            ctx.stroke();
+
+            for (let p = 0; p < 2; p++) {
+                ctx.strokeStyle = player_color[p];
+                ctx.beginPath();
+                ctx.rect(d(player_edit_area[p].x - 0.5) * 50, d(player_edit_area[p].y - 0.5) * 50, 800, 800);
+                ctx.stroke();
+            }
+
+            ctx.strokeStyle = '#666666';
+            for (let [c, p] of cells) {
+                c = JSON.parse(c);
+                ctx.fillStyle = player_color[p];
+                ctx.beginPath();
+                ctx.rect(d(c.x - 0.5) * 50, d(c.y - 0.5) * 50, 50, 50);
+                ctx.fill();
+                ctx.stroke();
+            }
+
+            ctx.font = '72px serif';
+            ctx.fillStyle = player_color[player];
+            ctx.fillText(`Player ${player + 1}`, -ctx.measureText(`Player a\'s turn. Generation: ${generation}`).width / 2, -innerHeight / 2 + 100);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillText(`\'s turn. Generation: ${generation}`, (ctx.measureText('Player a').width - ctx.measureText(`\'s turn. Generation: ${generation}`).width) / 2, -innerHeight / 2 + 100);
+
+            ctx.fillText(`Player 1 coin: ${player_coin[0]}`, -innerWidth / 2 + 100, -innerHeight / 2 + 100);
+            ctx.fillText(`Player 2 coin: ${player_coin[1]}`, innerWidth / 2 - 100 - ctx.measureText(`Player 2 coin: ${player_coin[1]}`).width, -innerHeight / 2 + 100);
+        }
+
+        function gn(c) {
+            return [-1, 0, 1].map(x => [-1, 0, 1].map(y => {
+                let r = {x: c.x + x, y: c.y + y};
+                if (c.x === 1 && r.x === 0)
+                    r.x = -1;
+                else if (c.x === -1 && r.x === 0)
+                    r.x = 1;
+                if (c.y === 1 && r.y === 0)
+                    r.y = -1;
+                else if (c.y === -1 && r.y === 0)
+                    r.y = 1;
+                return r;
+            })).flat().map(JSON.stringify);
+        }
+
+        function gp(ns) {
+            let [a, b, c] = ns;
+            if (a === b && b === c) return a;
+            if (a === b || a === c) return a;
+            if (b === c) return b;
+            return ns[Math.floor(Math.random() * 3)];
+        }
+
+        function evolve() {
+            let live = new Set(cells.keys()), check = new Set(), next = new Map();
+            cells.keys().map(JSON.parse).forEach(c => {
+                gn(c).forEach(n => {
+                    if (!check.has(n))
+                        check.add(n);
+                });
+            });
+            [...check].forEach(c => {
+                let pc = JSON.parse(c);
+                let live_nb = gn(pc).filter(n => live.has(n) && n !== c);
+                if (live.has(c) && (live_nb.length === 2 || live_nb.length === 3))
+                    next.set(c, cells.get(c));
+                else if (!live.has(c) && live_nb.length === 3 && Math.abs(pc.x) <= evolve_area[0] && Math.abs(pc.y) <= evolve_area[1])
+                    next.set(c, gp(live_nb.map(c => cells.get(c))));
+            });
+            next.values().forEach(p => player_coin[p]++);
+            cells = new Map(next);
+            generation++;
+        }
+
+        function can_edit(x, y) {
+            return player_edit_area[player].x <= x && x < player_edit_area[player].x + 16 && Math.abs(y) <= 8;
+        }
+
+        function step() {
+            if (generation >= 1000)
+                return;
+            if (player === 0) {
+                player = 1;
+                draw();
+                pre_coin = [...player_coin];
+                pre_cells = new Map(cells);
+            }
+            else if (player === 1) {
+                player = 0;
+                evolve();
+                draw();
+                pre_coin = [...player_coin];
+                pre_cells = new Map(cells);
+                if (generation === 1000) {
+                    alert(player_coin[0] > player_coin[1] ? 'Player 1 win!' : player_coin[0] < player_coin[1] ? 'Player 2 win!' : 'It\'s a tie!');
+                    location.reload();
+                }
+            }
+        }
+
+        function undo() {
+            player_coin = [...pre_coin];
+            cells = new Map(pre_cells);
+            draw();
+        }
+
+        function help() {
+            alert(`Cells are evolved according to the Game of Life rules.\nEvery evolution each player will get 1 coin for each of their live cells.\nCost ${cost} coins to add a live cell. Remove 1 of your live cell will get ${Math.floor(cost / 10)} coins back.\nPlayer 1 can only edit in yellow square.\nPlayer 2 can only edit in blue square.\nOnly cells in purple square will be processed.\nPlayer who get the most coin in generation 1000 will win.`);
+        }
+
+        draw();
+        addEventListener('resize', draw);
+        addEventListener('keydown', function (e) {
+            if (e.key === ' ')
+                step();
+        });
+        let isDragging = false, addordelete = true;
+        addEventListener('mousedown', function (e) {
+            isDragging = true;
+            let x = u((e.clientX - innerWidth / 2) / 50), y = u((e.clientY - innerHeight / 2) / 50);
+            if (x === 0 || y === 0 || !can_edit(x, y))
+                return;
+            let sc = JSON.stringify({x: x, y: y});
+            addordelete = !cells.has(sc);
+            if (addordelete && player_coin[player] >= cost) {
+                cells.set(sc, player);
+                player_coin[player] -= cost;
+            }
+            else if (cells.get(sc) === player) {
+                cells.delete(sc);
+                player_coin[player] += Math.floor(cost / 10);
+            }
+            draw();
+        });
+        addEventListener('mousemove', function (e) {
+            if (isDragging) {
+                let x = u((e.clientX - innerWidth / 2) / 50), y = u((e.clientY - innerHeight / 2) / 50);
+                if (x === 0 || y === 0 || !can_edit(x, y))
+                    return;
+                let sc = JSON.stringify({x: x, y: y}), live = cells.has(sc);
+                if (addordelete && !live && player_coin[player] >= cost) {
+                    cells.set(sc, player);
+                    player_coin[player] -= cost;
+                }
+                else if (!addordelete && live && cells.get(sc) === player) {
+                    cells.delete(sc);
+                    player_coin[player] += Math.floor(cost / 10);
+                }
+                draw();
+            }
+        });
+        addEventListener('mouseup', function (e) {
+            isDragging = false;
+            addordelete = true;
+        });
+    </script>
+</body>
+</html>
