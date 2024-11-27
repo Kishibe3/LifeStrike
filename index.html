@@ -9,10 +9,10 @@
         }
         div {
             position: fixed;
-            bottom: 50px;
+            bottom: 25px;
         }
         button {
-            font-size: 48px;
+            font-size: 24px;
             margin: 0px 10px;
             padding: 0px 10px;
         }
@@ -53,7 +53,7 @@
             ctx.strokeStyle = '#FFFFFF';
             ctx.moveTo(-innerWidth / 2, 0);
             ctx.lineTo(innerWidth / 2, 0);
-            for (let p = 50; p < innerHeight / 2; p += 50) {
+            for (let p = 25; p < innerHeight / 2; p += 25) {
                 ctx.moveTo(-innerWidth / 2, p);
                 ctx.lineTo(innerWidth / 2, p);
                 ctx.moveTo(-innerWidth / 2, -p);
@@ -61,7 +61,7 @@
             }
             ctx.moveTo(0, -innerHeight / 2);
             ctx.lineTo(0, innerHeight / 2);
-            for (let p = 50; p < innerWidth / 2; p += 50) {
+            for (let p = 25; p < innerWidth / 2; p += 25) {
                 ctx.moveTo(p, -innerHeight / 2);
                 ctx.lineTo(p, innerHeight / 2);
                 ctx.moveTo(-p, -innerHeight / 2);
@@ -72,13 +72,13 @@
             ctx.lineWidth = 3;
             ctx.strokeStyle = '#FF00FF';
             ctx.beginPath();
-            ctx.rect(d(-evolve_area[0] - 0.5) * 50, d(-evolve_area[1] - 0.5) * 50, evolve_area[0] * 100, evolve_area[1] * 100);
+            ctx.rect(d(-evolve_area[0] - 0.5) * 25, d(-evolve_area[1] - 0.5) * 25, evolve_area[0] * 50, evolve_area[1] * 50);
             ctx.stroke();
 
             for (let p = 0; p < 2; p++) {
                 ctx.strokeStyle = player_color[p];
                 ctx.beginPath();
-                ctx.rect(d(player_edit_area[p].x - 0.5) * 50, d(player_edit_area[p].y - 0.5) * 50, 800, 800);
+                ctx.rect(d(player_edit_area[p].x - 0.5) * 25, d(player_edit_area[p].y - 0.5) * 25, 400, 400);
                 ctx.stroke();
             }
 
@@ -87,19 +87,19 @@
                 c = JSON.parse(c);
                 ctx.fillStyle = player_color[p];
                 ctx.beginPath();
-                ctx.rect(d(c.x - 0.5) * 50, d(c.y - 0.5) * 50, 50, 50);
+                ctx.rect(d(c.x - 0.5) * 25, d(c.y - 0.5) * 25, 25, 25);
                 ctx.fill();
                 ctx.stroke();
             }
 
-            ctx.font = '72px serif';
+            ctx.font = '36px serif';
             ctx.fillStyle = player_color[player];
-            ctx.fillText(`Player ${player + 1}`, -ctx.measureText(`Player a\'s turn. Generation: ${generation}`).width / 2, -innerHeight / 2 + 100);
+            ctx.fillText(`Player ${player + 1}`, -ctx.measureText(`Player a\'s turn. Generation: ${generation}`).width / 2, -innerHeight / 2 + 50);
             ctx.fillStyle = '#FFFFFF';
-            ctx.fillText(`\'s turn. Generation: ${generation}`, (ctx.measureText('Player a').width - ctx.measureText(`\'s turn. Generation: ${generation}`).width) / 2, -innerHeight / 2 + 100);
+            ctx.fillText(`\'s turn. Generation: ${generation}`, (ctx.measureText('Player a').width - ctx.measureText(`\'s turn. Generation: ${generation}`).width) / 2, -innerHeight / 2 + 50);
 
-            ctx.fillText(`Player 1 coin: ${player_coin[0]}`, -innerWidth / 2 + 100, -innerHeight / 2 + 100);
-            ctx.fillText(`Player 2 coin: ${player_coin[1]}`, innerWidth / 2 - 100 - ctx.measureText(`Player 2 coin: ${player_coin[1]}`).width, -innerHeight / 2 + 100);
+            ctx.fillText(`Player 1 coin: ${player_coin[0]}`, -innerWidth / 2 + 50, -innerHeight / 2 + 50);
+            ctx.fillText(`Player 2 coin: ${player_coin[1]}`, innerWidth / 2 - 50 - ctx.measureText(`Player 2 coin: ${player_coin[1]}`).width, -innerHeight / 2 + 50);
         }
 
         function gn(c) {
@@ -191,7 +191,7 @@
         let isDragging = false, addordelete = true;
         addEventListener('mousedown', function (e) {
             isDragging = true;
-            let x = u((e.clientX - innerWidth / 2) / 50), y = u((e.clientY - innerHeight / 2) / 50);
+            let x = u((e.clientX - innerWidth / 2) / 25), y = u((e.clientY - innerHeight / 2) / 25);
             if (x === 0 || y === 0 || !can_edit(x, y))
                 return;
             let sc = JSON.stringify({x: x, y: y});
@@ -208,7 +208,7 @@
         });
         addEventListener('mousemove', function (e) {
             if (isDragging) {
-                let x = u((e.clientX - innerWidth / 2) / 50), y = u((e.clientY - innerHeight / 2) / 50);
+                let x = u((e.clientX - innerWidth / 2) / 25), y = u((e.clientY - innerHeight / 2) / 25);
                 if (x === 0 || y === 0 || !can_edit(x, y))
                     return;
                 let sc = JSON.stringify({x: x, y: y}), live = cells.has(sc);
